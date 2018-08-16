@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <atomic>
+#include <chrono>
 #include "assert.h"
 
 namespace kmt{
@@ -195,30 +196,29 @@ template <typename T, int N> class pipeline final {
 };
 
 //////////////////////////////////////////////////////
-
-class timeout {
-public:
-	int timeout_{ 0 };
-};
+const std::chrono::microseconds timeout(int64_t ms) {
+	return std::chrono::microseconds(ms);
+}
 
 template <typename T, int N> class channel {
 
 private:
-	pipeline<T, N> pipe;
+	pipeline<T, N> pipe_;
+	std::chrono::microseconds timeout_;
 
 public:
 	friend channel& operator<<(channel& out, const T& x) {
-		out.pipe.write(x, false);
-		out.pipe.flush();
+		out.pipe_.write(x);
+		out.pipe_.flush();
 		return out;
 	}
 
 	friend channel& operator>>(channel& in, T& x) {
-		in.pipe.read(&x);
+		in.pipe_.read(&x);
 		return in;
 	}
 
-	friend channel& operator<<(channel& out, const timeout& x) {
+	friend channel& operator<<(channel& out, const std::chrono::microseconds& x) {
 		return out;
 	}
 };
