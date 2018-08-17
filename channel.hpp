@@ -200,6 +200,10 @@ const std::chrono::microseconds timeout(int64_t ms) {
 	return std::chrono::microseconds(ms);
 }
 
+const struct end_t {
+}end;
+
+
 template <typename T, int N> class channel {
 
 private:
@@ -209,16 +213,20 @@ private:
 public:
 	friend channel& operator<<(channel& out, const T& x) {
 		out.pipe_.write(x);
-		out.pipe_.flush();
 		return out;
 	}
 
 	friend channel& operator>>(channel& in, T& x) {
-		in.pipe_.read(&x);
+		while (!in.pipe_.read(&x));
 		return in;
 	}
 
 	friend channel& operator<<(channel& out, const std::chrono::microseconds& x) {
+		return out;
+	}
+	
+	friend channel& operator<<(channel& out, const end_t& x) {
+		out.pipe_.flush();
 		return out;
 	}
 };
